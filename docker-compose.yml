@@ -1,0 +1,64 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: mailbox_db
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./mailbox_db:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - '5433:5432'
+    networks:
+      - shared-network
+
+  redis:
+    image: redis:latest
+    container_name: mailbox_redis
+    restart: always
+    ports:
+      - '6381:6379'
+    volumes: 
+      - mailbox_redis:/data
+    networks:
+      - shared-network
+
+  mailer:
+    restart: always
+    build:
+      context: mailer
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - shared-network
+
+  backend:
+    container_name: mailbox_backend
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    ports:
+      - '5000:5000'
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+      - mailer
+    networks:
+      - shared-network
+
+volumes:
+  mailbox_db:
+  mailbox_redis:
+
+networks:
+  shared-network:
