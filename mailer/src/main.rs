@@ -29,6 +29,7 @@ async fn main() {
         .credentials(creds)
         .build();
 
+    // TODO: Get allowed origin from .env
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST])
         .allow_origin(Any);
